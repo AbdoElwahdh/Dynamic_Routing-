@@ -1,12 +1,13 @@
+# router/router.py
 from .rules import classify_query
 from .cache import Cache
-from config import SIMPLE_MODEL, MEDIUM_MODEL, ADVANCED_MODEL, \
-     FALLBACK_ENABLED, MAX_RETRIES
+from models.models import MODEL_MAP # استيراد الـ MODEL_MAP من models.py
+from config import SIMPLE_MODEL, MEDIUM_MODEL, ADVANCED_MODEL, FALLBACK_ENABLED, MAX_RETRIES
 
 cache = Cache()
 
-
-def RouteQuery(query, use_cache=True):
+# تم تغيير اسم الدالة ليكون أوضح
+def route_query(query, use_cache=True):
     """
     Main routing function that:
     1. Checks cache if enabled
@@ -14,78 +15,76 @@ def RouteQuery(query, use_cache=True):
     3. Routes to appropriate model
     4. Handles fallback if needed
     """
-    # Check cache first
-    if use_cache and cache.is_enabled():
+    # 1. التحقق من الكاش
+    if use_cache and cache.enabled:
         cached_response = cache.get(query)
         if cached_response:
+            print("--> Response found in cache!")
             return {
                 "query": query,
                 "route": "cache",
                 "response": cached_response,
-                "cached": True
+                "cached": True,
+                "model": "N/A (Cached)"
             }
 
-    # Classify the query
+    # 2. تصنيف الاستعلام
     complexity = classify_query(query)
 
-    # Route based on complexity
+    # 3. اختيار النموذج بناءً على التصنيف
     if complexity == "simple":
-        model = SIMPLE_MODEL
+        model_name = SIMPLE_MODEL
     elif complexity == "medium":
-        model = MEDIUM_MODEL
+        model_name = MEDIUM_MODEL
     else:  # advanced
-        model = ADVANCED_MODEL
+        model_name = ADVANCED_MODEL
 
-    # Try to get response with potential fallback
-    response, final_model = get_response_with_fallback(
-        query, model, complexity)
+    # 4. الحصول على الإجابة مع منطق الـ Fallback
+    response, final_model = get_response_with_fallback(query, model_name, complexity)
 
-    # Cache the response
-    if use_cache and cache.is_enabled():
+    # 5. تخزين الإجابة في الكاش (إذا لم تكن خطأ)
+    if use_cache and cache.enabled and "API_ERROR" not in response:
         cache.set(query, response)
 
     return {
         "query": query,
-        "route": f"{complexity} -> {final_model}",
+        "route": complexity,
         "response": response,
-        "cached": False
+        "cached": False,
+        "model": final_model
     }
 
-
-def get_response_with_fallback(query, initial_model, initial_complexity, retries=0):
+def get_response_with_fallback(query, initial_model_name, initial_complexity, retries=0):
     """
-    Get response with fallback logic in case of errors or unsatisfactory
-     responses
+    يستدعي النموذج المحدد ويتعامل مع منطق الـ Fallback.
     """
+    current_model_name = initial_model_name
+    
     try:
-        response = None  # call and use model here
+        # **هذا هو التعديل الجوهري**: استدعاء الدالة من الـ MODEL_MAP
+        model_function = MODEL_MAP[current_model_name]
+        
+        print(f"--> Routing to: {current_model_name} (Level: {initial_complexity})")
+        response = model_function(query)
 
-        # Simple validation - if response is too short or indicates confusion,
-        #  try fallback
-        if ("I don't know" in response or "I'm not sure" in response) and \
-           FALLBACK_ENABLED and retries < MAX_RETRIES:
-
-            # Upgrade to a more powerful model
+        # التحقق من الإجابات غير المرضية لتفعيل الـ Fallback
+        if ("I don't know" in response or "I'm not sure" in response or "API_ERROR" in response) and FALLBACK_ENABLED and retries < MAX_RETRIES:
+            print(f"Unsatisfactory response from {current_model_name}. Attempting fallback...")
+            
+            # الترقية إلى نموذج أقوى
             if initial_complexity == "simple":
-                return get_response_with_fallback(
-                    query, MEDIUM_MODEL, "medium", retries + 1)
+                return get_response_with_fallback(query, MEDIUM_MODEL, "medium", retries + 1)
             elif initial_complexity == "medium":
-                return get_response_with_fallback(
-                    query, ADVANCED_MODEL, "advanced", retries + 1)
+                return get_response_with_fallback(query, ADVANCED_MODEL, "advanced", retries + 1)
 
-        return response, initial_model
+        return response, current_model_name
 
     except Exception as e:
-        # If there's an API error, try fallback
+        print(f"An error occurred with {current_model_name}: {e}. Trying fallback...")
         if FALLBACK_ENABLED and retries < MAX_RETRIES:
-            print(f"Error with {initial_model}: {str(e)}. Trying fallback...")
-
             if initial_complexity == "simple":
-                return get_response_with_fallback(
-                    query, MEDIUM_MODEL, "medium", retries + 1)
+                return get_response_with_fallback(query, MEDIUM_MODEL, "medium", retries + 1)
             elif initial_complexity == "medium":
-                return get_response_with_fallback(
-                    query, ADVANCED_MODEL, "advanced", retries + 1)
-
-        # If all retries fail or fallback is disabled, raise the exception
-        raise
+                return get_response_with_fallback(query, ADVANCED_MODEL, "advanced", retries + 1)
+        
+        return f"Fallback failed. Last error with {current_model_name}: {e}", current_model_name
