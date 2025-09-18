@@ -1,5 +1,6 @@
 from .rules import classify_query
 from .cache import Cache
+from models.models import get_model
 from config import SIMPLE_MODEL, MEDIUM_MODEL, ADVANCED_MODEL, \
      FALLBACK_ENABLED, MAX_RETRIES
 
@@ -30,15 +31,15 @@ def RouteQuery(query, use_cache=True):
 
     # Route based on complexity
     if complexity == "simple":
-        model = SIMPLE_MODEL
+        model_name = SIMPLE_MODEL
     elif complexity == "medium":
-        model = MEDIUM_MODEL
+        model_name = MEDIUM_MODEL
     else:  # advanced
-        model = ADVANCED_MODEL
+        model_name = ADVANCED_MODEL
 
     # Try to get response with potential fallback
     response, final_model = get_response_with_fallback(
-        query, model, complexity)
+        query, model_name, complexity)
 
     # Cache the response
     if use_cache and cache.is_enabled():
@@ -52,19 +53,23 @@ def RouteQuery(query, use_cache=True):
     }
 
 
-def get_response_with_fallback(query, initial_model, initial_complexity, retries=0):
+def get_response_with_fallback(query, initial_model_name, initial_complexity, retries=0):
     """
-    Get response with fallback logic in case of errors or unsatisfactory
-     responses
+    Get response with fallback logic in case of errors or unsatisfactory responses
     """
     try:
-        response = None  # call and use model here
+        # Get the model instance
+        model = get_model(initial_model_name)
+        
+        # Call the model to generate response
+        response = model.generate(query)
 
-        # Simple validation - if response is too short or indicates confusion,
-        #  try fallback
-        if ("I don't know" in response or "I'm not sure" in response) and \
+        # Check if response is too short or unclear
+        if response and len(response) < 20 and \
            FALLBACK_ENABLED and retries < MAX_RETRIES:
-
+            
+            print(f"Response too short from {initial_model_name}, upgrading...")
+            
             # Upgrade to a more powerful model
             if initial_complexity == "simple":
                 return get_response_with_fallback(
@@ -73,12 +78,12 @@ def get_response_with_fallback(query, initial_model, initial_complexity, retries
                 return get_response_with_fallback(
                     query, ADVANCED_MODEL, "advanced", retries + 1)
 
-        return response, initial_model
+        return response, initial_model_name
 
     except Exception as e:
         # If there's an API error, try fallback
         if FALLBACK_ENABLED and retries < MAX_RETRIES:
-            print(f"Error with {initial_model}: {str(e)}. Trying fallback...")
+            print(f"Error with {initial_model_name}: {str(e)}. Trying fallback...")
 
             if initial_complexity == "simple":
                 return get_response_with_fallback(
@@ -87,5 +92,5 @@ def get_response_with_fallback(query, initial_model, initial_complexity, retries
                 return get_response_with_fallback(
                     query, ADVANCED_MODEL, "advanced", retries + 1)
 
-        # If all retries fail or fallback is disabled, raise the exception
-        raise
+        # If all retries fail, raise the exception
+        raise Exception(f"All models failed. Last error: {str(e)}")

@@ -1,5 +1,5 @@
 # main.py
-from src.routers.router import RouteQuery
+from router.router import RouteQuery
 
 def main():
     print("🔹 Dynamic Routing System Demo 🔹")

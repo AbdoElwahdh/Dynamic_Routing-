@@ -7,6 +7,9 @@ class Cache:
         self.cache = {}
         self.enabled = CACHE_ENABLED
 
+    def is_enabled(self):
+        return self.enabled
+
     def get(self, key):
         if not self.enabled:
             return None

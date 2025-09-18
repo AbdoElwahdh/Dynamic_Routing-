@@ -1,7 +1,13 @@
-# model names:
-simple_model = ""
-medium_model = ""
-advanced_model = ""
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Model names
+SIMPLE_MODEL = "gemini-2.5-flash"
+MEDIUM_MODEL = "gemini-1.5-flash-8b"
+ADVANCED_MODEL = "gemini-2.5-pro"
 
 # Routing thresholds
 MAX_SIMPLE_LENGTH = 50  # Characters
@@ -20,7 +26,11 @@ SIMPLE_KEYWORDS = [
 # Cache settings
 CACHE_ENABLED = True
 
-
 # Fallback settings
 FALLBACK_ENABLED = True
 MAX_RETRIES = 2
+
+# API Configuration
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("Please set GROQ_API_KEY in .env file")
