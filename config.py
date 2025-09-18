@@ -29,8 +29,3 @@ CACHE_ENABLED = True
 # Fallback settings
 FALLBACK_ENABLED = True
 MAX_RETRIES = 2
-
-# API Configuration
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise ValueError("Please set GROQ_API_KEY in .env file")

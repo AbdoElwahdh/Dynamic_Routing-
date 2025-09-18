@@ -1,4 +1,7 @@
 import re
+import sys
+import os
+sys.path.append(os.path.abspath(".."))
 from config import MAX_SIMPLE_LENGTH, MAX_MEDIUM_LENGTH, \
     SIMPLE_KEYWORDS, COMPLEX_KEYWORDS
 

@@ -18,8 +18,6 @@ class ModelInfo:
     name: str
     supports_thinking: bool
     max_tokens: int
-    temperature: float = 0.7
-
 
 class GeminiModels:
     """Manages all Gemini model operations"""
@@ -39,9 +37,9 @@ class GeminiModels:
     
     def _setup_models(self):
         return {
-            "simple": ModelInfo(name=config.SIMPLE_MODEL, supports_thinking=False, max_tokens=2048),
-            "medium": ModelInfo(name=config.MEDIUM_MODEL, supports_thinking=False, max_tokens=4096),
-            "advanced": ModelInfo(name=config.ADVANCED_MODEL, supports_thinking=True, max_tokens=8192)
+            "G-Flash": ModelInfo(name=config.SIMPLE_MODEL, supports_thinking=False, max_tokens=2048),
+            "G-Flash-8g": ModelInfo(name=config.MEDIUM_MODEL, supports_thinking=False, max_tokens=4096),
+            "G-pro": ModelInfo(name=config.ADVANCED_MODEL, supports_thinking=True, max_tokens=8192)
         }
     
     def _get_model_info(self, model_level: str):
@@ -53,7 +51,7 @@ class GeminiModels:
         if use_thinking and not model_info.supports_thinking:
             raise ValueError(f"{model_info.name} does not support thinking mode")
     
-    def generate(self, prompt: str, model_level: str = "simple"):
+    def generate(self, prompt: str, model_level: str = "G-Flash"):
         model_info = self._get_model_info(model_level)
         
         response = self.client.models.generate_content(
@@ -63,7 +61,7 @@ class GeminiModels:
         
         return response.text
     
-    def generate_with_thinking(self, prompt: str, model_level: str = "advanced"):
+    def generate_with_thinking(self, prompt: str, model_level: str = "G-pro"):
         model_info = self._get_model_info(model_level)
         
         response = self.client.models.generate_content(
@@ -107,9 +105,9 @@ def run_tests():
     # Test generate
     print("\n[3] Testing generate:")
     prompts = {
-        "simple": "Tell me a quick fun fact",
-        "medium": "Summarize the importance of data science in 3 sentences",
-        "advanced": "Write a short poem about the future of AI"
+        "G-Flash": "Tell me a quick fun fact",
+        "G-Flash-8g": "Summarize the importance of data science in 3 sentences",
+        "G-pro": "Write a short poem about the future of AI"
     }
     for level, prompt in prompts.items():
         response = gemini.generate(prompt, level)
