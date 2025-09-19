@@ -1,15 +1,15 @@
-from typing import Dict, List, Optional, Union
+# models/gemini.py
+
+import os
+from typing import Dict, List
 from dataclasses import dataclass
 from dotenv import load_dotenv
-from google import genai
-import os
+import google.generativeai as genai
 from .base import BaseModel
-
 from config import config
 
 # Load environment variables
 load_dotenv()
-
 
 @dataclass
 class ModelInfo:
@@ -19,17 +19,16 @@ class ModelInfo:
 
 class GeminiModels(BaseModel):
     def __init__(self):
-        self._validate_api_key()
-        self.client = self._create_client()
+        # تم دمج التحقق والتهيئة في خطوة واحدة
+        self._validate_and_configure_api_key()
         self.models = self._setup_models()
     
-    def _validate_api_key(self):
-        self.api_key = os.environ.get("GEMINI_API_KEY")
-        if not self.api_key:
-            raise ValueError("GEMINI_API_KEY not found in environment")
-    
-    def _create_client(self):
-        return genai.Client(api_key=self.api_key)
+    def _validate_and_configure_api_key(self):
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment variables.")
+        # التهيئة الصحيحة لمفتاح الـ API
+        genai.configure(api_key=api_key)
     
     def _setup_models(self):
         return {
@@ -46,15 +45,19 @@ class GeminiModels(BaseModel):
     def generate(self, prompt: str, model_level: str):
         model_info = self._get_model_info(model_level)
         
-        response = self.client.models.generate_content(
-            model=model_info.name,
-            contents=prompt
-        )
+        # إنشاء كائن النموذج بالطريقة الصحيحة
+        model = genai.GenerativeModel(model_info.name)
         
-        return response.text
+        # استدعاء النموذج
+        try:
+            response = model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            # التعامل مع أي أخطاء قد تحدث من الـ API
+            print(f"Error from Gemini API: {e}")
+            return f"API_ERROR: Could not get a response from {model_info.name}."
     
-    
-    def list_models(self):
+    def list_models(self) -> List[Dict[str, str]]:
         result = []
         for level, info in self.models.items():
             model_dict = {
@@ -67,11 +70,4 @@ class GeminiModels(BaseModel):
     def get_model_name(self, level: str) -> str:
         model_info = self._get_model_info(level)
         return model_info.name
-    
 
-
-if __name__ == "__main__":
-    gemini = GeminiModels()
-    print("Testing Gemini model...")
-    response = gemini.generate("What is AI?", "simple")
-    print(f"Response: {response}")

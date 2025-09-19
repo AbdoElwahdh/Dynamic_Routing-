@@ -232,5 +232,14 @@
     "timestamp": 1758299997.3296735,
     "date": "2025-09-19T19:39:57.329673",
     "response_length": 46
+  },
+  "What is the capital of Egypt?": {
+    "query": "What is the capital of Egypt?",
+    "response": "The capital of Egypt is Cairo.\n",
+    "model": "gemini-1.5-flash",
+    "complexity": "simple",
+    "timestamp": 1758282182.443655,
+    "date": "2025-09-19T14:43:02.443654",
+    "response_length": 31
   }
 }
