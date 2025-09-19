@@ -11,6 +11,8 @@ dist/
 build/
 *.log
 
+.pytest_cache
+
 # Jupyter Notebooks
 .ipynb_checkpoints
 notebooks

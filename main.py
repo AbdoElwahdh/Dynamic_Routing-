@@ -1,23 +1,74 @@
-# main.py
-from router.router import RouteQuery
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
+
+from router.router import QueryRouter
+from evaluation.evaluator import Evaluator
+from config import config
+
+
+class DynamicRoutingApp:    
+    def __init__(self):
+        self.router = QueryRouter()
+        self.evaluator = Evaluator()
+        self.running = True
+
+    def print_header(self):
+        print("="*50)
+        print("MODEL_PROVIDER: ", config.MODEL_PROVIDER)
+        print("CACHE_ENABLED: ", config.CACHE_ENABLED)
+        print("FALLBACK_ENABLED: ", config.FALLBACK_ENABLED)
+        print("MAX_RETRIES: ", config.MAX_RETRIES)
+        print("="*50)
+        print("type 'exit' to Quit application")
+        print("type 'evaluate' to run evaluation")
+        print("="*50)
+    
+    def process_query(self, query: str) -> None:
+        self.evaluator.start_timer()
+        result = self.router.route_query_and_return_response(query)
+        elapsed = self.evaluator.stop_timer()
+        self.display_result(result, elapsed)
+    
+    def display_result(self, result, elapsed_time: float) -> None:
+        print("-"*50)
+        print("query: ", result.query)
+        print("complexity: ", result.complexity)
+        print("final_model: ", result.model_name)
+        print("from cache: ", result.cached)
+        print(f"Time: {elapsed_time:.3f}s")
+        print("response: ", result.response)
+        print("-"*50)
+    
+    def handle_command(self, command: str) -> None:
+        if command == "evaluate":
+            self.evaluator.evaluate_system(self.router)
+            self.running = False
+            print("Exiting application")
+            print("="*50)
+
+        elif command == "exit":
+            self.running = False
+            print("Exiting application")
+            print("="*50)
+
+        else:
+            self.process_query(command)
+    
+    def run(self):
+        self.print_header()
+        while self.running:
+            query = input("Query> ").strip()
+            if query:
+                self.handle_command(query)
+
 
 def main():
-    print("🔹 Dynamic Routing System Demo 🔹")
-    print("ُEnter your query (type 'exit' to quit):")
+    app = DynamicRoutingApp()
+    app.run()
 
-    while True:
-        query = input("Query: ").strip()
-        if query.lower() == "exit":
-            print("👋")
-            break
-
-        result = RouteQuery(query)
-        print("\n--- Result ---")
-        print(f"Query: {result['query']}")
-        print(f"Route: {result['route']}")
-        print(f"Response: {result['response']}")
-        print(f"From Cache: {result['cached']}")
-        print("---------------\n")
 
 if __name__ == "__main__":
     main()
+
+
