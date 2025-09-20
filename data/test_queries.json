@@ -1,0 +1,44 @@
+{
+  "queries": [
+    {
+      "text": "What is the capital of France?",
+      "true_label": "simple"
+    },
+    {
+      "text": "How many days are in a week?",
+      "true_label": "simple"
+    },
+    {
+      "text": "Explain the water cycle in simple terms",
+      "true_label": "medium"
+    },
+    {
+      "text": "What are the main differences between Python and Java?",
+      "true_label": "medium"
+    },
+    {
+      "text": "Describe the process of photosynthesis",
+      "true_label": "medium"
+    },
+    {
+      "text": "Analyze the impact of artificial intelligence on modern society",
+      "true_label": "advanced"
+    },
+    {
+      "text": "Compare and contrast different machine learning algorithms",
+      "true_label": "advanced"
+    },
+    {
+      "text": "Evaluate the ethical implications of genetic engineering",
+      "true_label": "advanced"
+    },
+    {
+      "text": "What color is the sky?",
+      "true_label": "simple"
+    },
+    {
+      "text": "Synthesize the main arguments for universal basic income",
+      "true_label": "advanced"
+    }
+  ]
+}
