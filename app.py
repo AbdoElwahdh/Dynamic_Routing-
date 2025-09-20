@@ -172,7 +172,6 @@ class DynamicRoutingUI:
         # Get latest report
         report_files = [
             f for f in os.listdir(reports_dir)
-            if f.endswith('.txt')
         ]
 
         if not report_files:
@@ -196,11 +195,15 @@ class DynamicRoutingUI:
         report_path = os.path.join(reports_dir, selected_report)
 
         try:
-            with open(report_path, 'r', encoding='utf-8') as f:
-                report_content = f.read()
-
             st.subheader(f"Report: {selected_report}")
-            st.text(report_content)
+            if selected_report.lower().endswith(".json"):
+                with open(report_path, 'r', encoding='utf-8') as f:
+                    report_json = json.load(f)
+                st.json(report_json)
+            else:
+                with open(report_path, 'r', encoding='utf-8') as f:
+                    report_content = f.read()
+                st.text(report_content)
 
             # Report metadata
             file_stats = os.stat(report_path)
